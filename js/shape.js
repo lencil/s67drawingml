@@ -5,6 +5,10 @@ class Shape {
         this.path = ShapeDefinition[this.type].path;
       
         this._dom = null;
+        this.offsetLeft = undefined;
+        this.offsetTop = undefined;
+        this.offsetWidth = undefined;
+        this.offsetTop = undefined;
 		
         this.top = 0;
         this.left = 0;
@@ -75,13 +79,19 @@ class Shape {
 			vBottom = this.b,
 			vRight = this.r;
 		
-		if(!this.dom) {
-			this.dom = this.SVG('svg');
-			def.forEach(p => this.dom.appendChild(this.SVG('path')));
+		if(!this._dom) {
+			this._dom = this.SVG('svg');
+			def.forEach(p => {
+                let path = this.SVG('path');
+                path.setAttribute('fill', '#777');
+                path.setAttribute('stroke', '#000');
+                path.setAttribute('stroke-width', '2160');
+                this._dom.appendChild(path);
+            });
 		}
         
         def.forEach((path, i) => {
-            let d = [], lastX = 0, lastY = 0;
+            let d = [], x1, x2, y1, y2, lastX, lastY;
             path.forEach(sp => {
                 switch(sp.cmd) {
                     case 'moveTo':
@@ -95,7 +105,8 @@ class Shape {
                         d.push(`${sp.cmd=='moveTo'? 'M' : 'L'} ${lastX} ${lastY}`);
                         break;
                     case 'quadBezTo':
-						let x1 = this.f(sp.x1), y1 = this.f(sp.y1);
+				        x1 = this.f(sp.x1);
+                        y1 = this.f(sp.y1);
                         lastX = this.f(sp.x2);
                         lastY = this.f(sp.y2);
 						vTop = Math.min.apply(null, [vTop, y1, lastY]);
@@ -105,7 +116,10 @@ class Shape {
                         d.push(`Q ${x1} ${y1} ${lastX} ${lastY}`);
                         break;
                     case 'cubicBezTo':
-						let x1 = this.f(sp.x1), x2 = this.f(sp.x2), y1 = this.f(sp.y1), y2 = this.f(sp.y2);
+						x1 = this.f(sp.x1);
+                        x2 = this.f(sp.x2);
+                        y1 = this.f(sp.y1);
+                        y2 = this.f(sp.y2);
                         lastX = this.f(sp.x3);
                         lastY = this.f(sp.y3);
 						vTop = Math.min.apply(null, [vTop, y1, y2, lastY]);
@@ -118,10 +132,10 @@ class Shape {
                         let p = this.getArcParamSVG(lastX, lastY, this.f(sp.wR), this.f(sp.hR), this.f(sp.stAng), this.f(sp.swAng));
                         lastX = p.endX;
                         lastY = p.endY;
-						vTop = Math.min(vTop, p.rY - p.cY);
-						vLeft = Math.min(vLeft, p.rX - p.cX);
-						vBottom = Math.max(vBottom, p.rY + p.cY);
-						vRight = Math.max(vRight, p.rX + p.cX);
+						vTop = Math.min(vTop, p.cY - p.rY);
+						vLeft = Math.min(vLeft, p.cX - p.rX);
+						vBottom = Math.max(vBottom, p.cY + p.rY);
+						vRight = Math.max(vRight, p.cX + p.rX);
                         d.push(`A ${p.width} ${p.height} 0 ${p.big} ${p.sweep} ${lastX} ${lastY}`);
                         break;
                     case 'close':
@@ -129,8 +143,12 @@ class Shape {
                         break;
                 }
             });
-			this.dom.setAttribute('viewBox', `${vLeft} ${vTop} ${vWidth} ${vHeight}`)
-            this.dom.childNodes[i].setAttribute('d', d.join(' '));
+            this.offsetLeft = vLeft;
+            this.offsetTop = vTop;
+            this.offsetWidth = vBottom - vTop;
+            this.offsetHeight = vRight - vLeft;
+			this._dom.setAttribute('viewBox', `${this.offsetLeft} ${this.offsetTop} ${this.offsetWidth} ${this.offsetHeight}`)
+            this._dom.childNodes[i].setAttribute('d', d.join(' '));
         });
     }
     SVG(tag) { return document.createElementNS('http://www.w3.org/2000/svg', tag); }
