@@ -20,7 +20,8 @@ class Shape {
     // guide formula handler
     f(v) {
         if(v.match(/^[0-9\-]+$/)) return v|0;     // numeric
-        if(typeof this[v]!="undefined") return this[v];             // reserved
+        if(typeof this[v]!="undefined") return this[v];
+		if(typeof this['_' + v]!="undefined") return this['_' + v];
         const gd = this.formula[v];
         if(!gd) console.error(`new formula : ${v}`);
         const cmd = gd.cmd,
@@ -30,9 +31,12 @@ class Shape {
             case 'val': return params[0];
             case '+-':  return params[0] + params[1] - params[2];
             case '*/':  return params[0] * params[1] / params[2];
+			case '+/':  return (params[0] + params[1]) / params[2];
             case 'min': return Math.min(params[0], params[1]);
             case 'max': return Math.max(params[0], params[1]);
             case 'pin': return Math.max(params[0], Math.min(params[1], params[2]));
+			case 'abs': return Math.abs(params[0]);
+			case 'sqrt': return Math.sqrt(params[0]);
             case 'mod': return Math.sqrt(params[0]*params[0] + params[1]*params[1] + params[2]*params[2]);
             case '?:':  return params[0]>0? params[1] : params[2];
             case 'sin': return params[0] * Math.sin(params[1] / 10800000 * Math.PI);
@@ -56,9 +60,15 @@ class Shape {
     get hd3() { return this.height/3; }
     get wd4() { return this.width/4; }
     get hd4() { return this.height/4; }
+	get wd8() { return this.width/8; }
     get ss() { return Math.min(this.w, this.h); }
+	get ssd6() { return this.ss/6; }
     get hc() { return this.l + this.w/2; }
     get vc() { return this.t + this.h/2; }
+	
+	get cd2() { return 10800000; }
+	get cd4() { return 5040000; }
+	get _3cd4() { return 5040000 * 3; }
     
     // general setters
     set t(v) { this.top = v; }
@@ -146,8 +156,9 @@ class Shape {
             this.offsetTop = vTop;
             this.offsetWidth = vBottom - vTop;
             this.offsetHeight = vRight - vLeft;
-			this._dom.setAttribute('viewBox', `${this.offsetLeft} ${this.offsetTop} ${this.offsetWidth} ${this.offsetHeight}`)
-            this._dom.childNodes[i].setAttribute('d', d.join(' '));
+			this._dom.setAttribute('viewBox', `${this.offsetLeft} ${this.offsetTop} ${this.offsetWidth} ${this.offsetHeight}`);
+			def.forEach((_, i) => this._dom.childNodes[i].setAttribute('transform', `translate(${-this.offsetLeft} ${-this.offsetTop})`));
+			this._dom.childNodes[i].setAttribute('d', d.join(' '));
         });
     }
     SVG(tag) { return document.createElementNS('http://www.w3.org/2000/svg', tag); }

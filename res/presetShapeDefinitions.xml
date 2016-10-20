@@ -4251,7 +4251,7 @@
     </pathLst>
 
   </chord>
-  <circularArrow>
+  <!--circularArrow>
 
     <avLst xmlns="http://schemas.openxmlformats.org/drawingml/2006/main">
       <gd name="adj1" fmla="val 12500" />
@@ -4613,7 +4613,7 @@
       </path>
     </pathLst>
 
-  </circularArrow>
+  </circularArrow-->
   <cloud>
 
     <gdLst xmlns="http://schemas.openxmlformats.org/drawingml/2006/main">

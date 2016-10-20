@@ -7,6 +7,10 @@ shapeLoader.load('./res/presetShapeDefinitions.xml')
             opt.setAttribute('value', type);
             opt.innerHTML = type;
             sb.appendChild(opt);
+			
+			// just 4 test
+			//let shape = new Shape(type);
+			//shape.render();
         });
 	
 		playground.addEventListener('click', e => {
@@ -30,8 +34,7 @@ shapeLoader.load('./res/presetShapeDefinitions.xml')
 			
 			playground.appendChild(div);
 		});
-	})
-    .catch(msg => console.error(msg));
+	});
 	
 let emu2px = emu => emu/12700 + 'px';
 let px2emu = px => parseInt(px)*12700;
