@@ -80,21 +80,11 @@ class Shape {
 			def.forEach(p => this.dom.appendChild(this.SVG('path')));
 		}
         
-        
         def.forEach((path, i) => {
             let d = [], lastX = 0, lastY = 0;
             path.forEach(sp => {
                 switch(sp.cmd) {
                     case 'moveTo':
-                        lastX = this.f(sp.x);
-                        lastY = this.f(sp.y);
-						vTop = Math.min(vTop, lastY);
-						vLeft = Math.min(vLeft, lastX);
-						vBottom = Math.max(vBottom, lastY);
-						vRight = Math.max(vRight, lastX);
-                        d.push(`M ${lastX} ${lastY}`);
-                        //d.push('M ' + lastX + ' ' + lastY)
-                        break;
                     case 'lnTo':
                         lastX = this.f(sp.x);
                         lastY = this.f(sp.y);
@@ -102,22 +92,36 @@ class Shape {
 						vLeft = Math.min(vLeft, lastX);
 						vBottom = Math.max(vBottom, lastY);
 						vRight = Math.max(vRight, lastX);
-                        d.push(`L ${lastX} ${lastY}`);
+                        d.push(`${sp.cmd=='moveTo'? 'M' : 'L'} ${lastX} ${lastY}`);
                         break;
                     case 'quadBezTo':
+						let x1 = this.f(sp.x1), y1 = this.f(sp.y1);
                         lastX = this.f(sp.x2);
                         lastY = this.f(sp.y2);
-                        d.push(`Q ${this.f(sp.x1)} ${this.f(sp.y1)} ${lastX} ${lastY}`);
+						vTop = Math.min.apply(null, [vTop, y1, lastY]);
+						vLeft = Math.min.apply(null, [vLeft, x1, lastX]);
+						vBottom = Math.max.apply(null, [vBottom, y1, lastY]);
+						vRight = Math.max.apply(null, [vRight, x1, lastX]);
+                        d.push(`Q ${x1} ${y1} ${lastX} ${lastY}`);
                         break;
                     case 'cubicBezTo':
+						let x1 = this.f(sp.x1), x2 = this.f(sp.x2), y1 = this.f(sp.y1), y2 = this.f(sp.y2);
                         lastX = this.f(sp.x3);
                         lastY = this.f(sp.y3);
-                        d.push(`C ${this.f(sp.x1)} ${this.f(sp.y1)} ${this.f(sp.x2)} ${this.f(sp.y2)} ${lastX} ${lastY}`);
+						vTop = Math.min.apply(null, [vTop, y1, y2, lastY]);
+						vLeft = Math.min.apply(null, [vLeft, x1, x2, lastX]);
+						vBottom = Math.max.apply(null, [vBottom, y1, y2, lastY]);
+						vRight = Math.max.apply(null, [vRight, x1, x2, lastX]);
+                        d.push(`C ${x1} ${y1} ${x2} ${y2} ${lastX} ${lastY}`);
                         break;
                     case 'arcTo':
                         let p = this.getArcParamSVG(lastX, lastY, this.f(sp.wR), this.f(sp.hR), this.f(sp.stAng), this.f(sp.swAng));
                         lastX = p.endX;
                         lastY = p.endY;
+						vTop = Math.min(vTop, p.rY - p.cY);
+						vLeft = Math.min(vLeft, p.rX - p.cX);
+						vBottom = Math.max(vBottom, p.rY + p.cY);
+						vRight = Math.max(vRight, p.rX + p.cX);
                         d.push(`A ${p.width} ${p.height} 0 ${p.big} ${p.sweep} ${lastX} ${lastY}`);
                         break;
                     case 'close':
@@ -149,7 +153,11 @@ class Shape {
             big: bSweep ^ bBig ^ 1,
             sweep: bSweep ^ 0,
             endX: cX + Math.cos(dEnd) * rX,
-            endY: cY + Math.sin(dEnd) * rY
+            endY: cY + Math.sin(dEnd) * rY,
+			rX: rX,
+			rY: rY,
+			cX: cX,
+			cY: cY
         }
     }
 }
