@@ -3,6 +3,9 @@ class Shape {
         this.type = type;
         this.formula = ShapeDefinition[this.type].formula;
         this.path = ShapeDefinition[this.type].path;
+      
+        this._dom = null;
+		
         this.top = 0;
         this.left = 0;
         this.width = 216000;
@@ -18,7 +21,7 @@ class Shape {
         if(!gd) console.error(`new formula : ${v}`);
         const cmd = gd.cmd,
               params = gd.params.map(p => this.f(p));
-        console.log(name, cmd, params);
+		
         switch(cmd) {
             case 'val': return params[0];
             case '+-':  return params[0] + params[1] - params[2];
@@ -61,26 +64,44 @@ class Shape {
     rotate(a) { this.rotation = a; }
     
     // renderer
+	get dom() {
+		if(!this._dom) this.render();
+		return this._dom
+	}
     render() {
-        let root = this.SVG('svg'), p;
+		const def = ShapeDefinition[this.type].path;
+        let vTop = this.t,
+			vLeft = this.l,
+			vBottom = this.b,
+			vRight = this.r;
+		
+		if(!this.dom) {
+			this.dom = this.SVG('svg');
+			def.forEach(p => this.dom.appendChild(this.SVG('path')));
+		}
         
-        root.setAttribute('viewBox', `${this.l} ${this.t} ${this.w} ${this.h}`)
         
-        ShapeDefinition[this.type].path.forEach(path => {
-            p = this.SVG('path');
+        def.forEach((path, i) => {
             let d = [], lastX = 0, lastY = 0;
             path.forEach(sp => {
-                console.log(sp);
                 switch(sp.cmd) {
                     case 'moveTo':
                         lastX = this.f(sp.x);
                         lastY = this.f(sp.y);
+						vTop = Math.min(vTop, lastY);
+						vLeft = Math.min(vLeft, lastX);
+						vBottom = Math.max(vBottom, lastY);
+						vRight = Math.max(vRight, lastX);
                         d.push(`M ${lastX} ${lastY}`);
                         //d.push('M ' + lastX + ' ' + lastY)
                         break;
                     case 'lnTo':
                         lastX = this.f(sp.x);
                         lastY = this.f(sp.y);
+						vTop = Math.min(vTop, lastY);
+						vLeft = Math.min(vLeft, lastX);
+						vBottom = Math.max(vBottom, lastY);
+						vRight = Math.max(vRight, lastX);
                         d.push(`L ${lastX} ${lastY}`);
                         break;
                     case 'quadBezTo':
@@ -104,11 +125,9 @@ class Shape {
                         break;
                 }
             });
-            p.setAttribute('d', d.join(' '));
-            root.appendChild(p);
+			this.dom.setAttribute('viewBox', `${vLeft} ${vTop} ${vWidth} ${vHeight}`)
+            this.dom.childNodes[i].setAttribute('d', d.join(' '));
         });
-        
-        return root;
     }
     SVG(tag) { return document.createElementNS('http://www.w3.org/2000/svg', tag); }
     getArcParamSVG(lastX, lastY, rX, rY, stAng, swAng) {
