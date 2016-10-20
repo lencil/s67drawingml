@@ -12,14 +12,14 @@ class Shape {
 		
         this.top = 0;
         this.left = 0;
-        this.width = 216000;
-        this.height = 216000;
+        this.width = 2160000;
+        this.height = 2160000;
         this.rotation = 0;
     }
     
     // guide formula handler
     f(v) {
-        if(v.match(/^[0-9]+$/)) return v|0;     // numeric
+        if(v.match(/^[0-9\-]+$/)) return v|0;     // numeric
         if(typeof this[v]!="undefined") return this[v];             // reserved
         const gd = this.formula[v];
         if(!gd) console.error(`new formula : ${v}`);
@@ -85,7 +85,6 @@ class Shape {
                 let path = this.SVG('path');
                 path.setAttribute('fill', '#777');
                 path.setAttribute('stroke', '#000');
-                path.setAttribute('stroke-width', '2160');
                 this._dom.appendChild(path);
             });
 		}
